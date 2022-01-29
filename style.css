@@ -41,19 +41,19 @@ main {
 }
 
 /* Create three unequal columns that sits next to each other */
-aside, .toc_summary, section {
+aside, section {
   padding: 10px;
 }
 
 /* Left and right column */
-aside, .toc_summary {
+aside {
    flex: 1;
    background-color: dodgerblue;
 }
 
 /* Middle column */
 section {
-  flex: 5;
+  flex: 7;
   background-color: rgb(83, 114, 114);
 }
 
