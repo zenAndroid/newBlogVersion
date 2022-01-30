@@ -41,7 +41,7 @@ main {
 }
 
 /* Create three unequal columns that sits next to each other */
-aside, section {
+aside, article {
   padding: 10px;
 }
 
@@ -52,7 +52,7 @@ aside {
 }
 
 /* Middle column */
-section {
+article {
   flex: 7;
   background-color: rgb(83, 114, 114);
 }
