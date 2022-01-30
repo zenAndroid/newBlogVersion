@@ -16,7 +16,10 @@ nav {
   display: flex;
   justify-content: center;
 }
-
+a:visited {
+  color: rgb(200, 0, 0, 0.5);
+  text-decoration: none;
+}
 /* Navbar links */
 nav a {
   flex: 1;
