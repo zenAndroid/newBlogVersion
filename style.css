@@ -1,9 +1,19 @@
+:root{
+  --page-bg-color:            hsl(350 , 15%, 5%);
+  --article-bg-color:         hsl(350, 15%, 6%);
+  --nav-bg-color:             hsl(350, 15%, 8%);
+  --hover-nav-color:          hsl(350, 70%, 12%);
+  --header-footer-bg-color:   hsl(350, 15%, 4%);
+  --header-footer-text-color: hsl(350, 15%, 50%);
+  --visited-link-color:       hsl(350, 60%, 30%);
+}
+
+
 * {
   box-sizing: border-box;
 }
-
 html{
-  background-color: rgb(0, 0, 0);
+  background-color: var(--page-bg-color);
 }
 
 body {
@@ -12,23 +22,24 @@ body {
 
 nav {
   overflow: hidden;
-  background-color: rgb(15, 15, 15);
+  background-color: var(--nav-bg-color);
   display: flex;
   justify-content: center;
 }
 
 article a:visited {
-  color: rgb(22, 50, 65);
+  color: var(--visited-link-color);
   text-decoration: none;
 }
 
-article a, header a {
-  color: rgb(173, 221, 244);
+article a {
+  color: hsl(199, 76%, 82%);
+  font-size: 2em;
 }
 
 nav a {
   flex: 1;
-  color: rgb(200, 200, 220, 0.5);
+  color: hsla(240, 22%, 82%, 0.5);
   text-align: center;
   padding: 0.5em 1em;
   text-decoration: none;
@@ -36,16 +47,17 @@ nav a {
 
 
 nav a:hover {
-  background-color: rgb(221, 221, 221,0.5);
-  color: black;
+  background-color: var(--hover-nav-color);
+  color: white;
 }
 
 
 header {
-  background-color: rgb(10, 10, 10);
+  background-color: var(--header-footer-bg-color);
   padding: 1em;
   text-align: center; 
 }
+
 img {
   width: 30vw;
   height: auto;
@@ -53,32 +65,26 @@ img {
 
 main {
   display: flex;
+  justify-content: center;
 }
-
-
-aside {
-   padding: 0.5em;
-   flex: 1;
-   background-color: rgb(10, 10, 10);
-   color: lightgray;
-}
-
 
 article {
   padding: 2em;
-  flex: 7;
-  background-color: rgb(0, 0, 0);
+  width: 70vw;
+  background-color: var(--article-bg-color);
   color: lightgray;
 }
 
-
 footer {
-  background-color: rgb(20, 18, 20);
+  background-color: var(--header-footer-bg-color);
   color: lightgray;
   padding: 1em;
   text-align: center;
 }
 
+footer p::after {
+  content: " Pseudo-element footer p::after css content";
+}
 
 @media (max-width: 600px) {
   main, nav {
