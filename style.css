@@ -6,12 +6,15 @@
   --header-footer-bg-color:   hsl(350, 15%, 4%);
   --header-footer-text-color: hsl(350, 15%, 50%);
   --visited-link-color:       hsl(350, 60%, 30%);
+  --nav-links:                hsl(350, 22%, 82%);
+  --article-links :           hsl(350, 76%, 82%);
 }
 
 
 * {
   box-sizing: border-box;
 }
+
 html{
   background-color: var(--page-bg-color);
 }
@@ -21,46 +24,21 @@ body {
 }
 
 nav {
-  overflow: hidden;
   background-color: var(--nav-bg-color);
   display: flex;
-  justify-content: center;
-}
-
-article a:visited {
-  color: var(--visited-link-color);
-  text-decoration: none;
-}
-
-article a {
-  color: hsl(199, 76%, 82%);
-  font-size: 2em;
 }
 
 nav a {
   flex: 1;
-  color: hsla(240, 22%, 82%, 0.5);
+  color: var(--nav-links);
   text-align: center;
   padding: 0.5em 1em;
   text-decoration: none;
 }
 
-
 nav a:hover {
   background-color: var(--hover-nav-color);
   color: white;
-}
-
-
-header {
-  background-color: var(--header-footer-bg-color);
-  padding: 1em;
-  text-align: center; 
-}
-
-img {
-  width: 30vw;
-  height: auto;
 }
 
 main {
@@ -69,10 +47,37 @@ main {
 }
 
 article {
+  line-height: 1.8em;
   padding: 2em;
-  width: 70vw;
+  width: 80vw;
   background-color: var(--article-bg-color);
   color: lightgray;
+}
+
+article img {
+  display: block;
+  margin: auto;
+}
+article a:visited {
+  color: var(--visited-link-color);
+  text-decoration: none;
+}
+
+article a {
+  color: var(--article-links);
+  font-size: 1.5em;
+}
+
+header {
+  background-color: var(--header-footer-bg-color);
+  padding: 1em;
+  text-align: center; 
+}
+
+img {
+  opacity: 50%;
+  width: 30vw;
+  height: auto;
 }
 
 footer {
@@ -86,8 +91,16 @@ footer p::after {
   content: " Pseudo-element footer p::after css content";
 }
 
+header a::after {
+  /* Pain */
+}
+
+#posttitle {
+  font-size: 4em;
+  text-align: center;
+}
 @media (max-width: 600px) {
-  main, nav {
+  nav {
     flex-direction: column;
   }
   img {

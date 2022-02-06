@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mealy machine, Java records, and some spicy scalability - zenBlog</title>
+    <link href="../style.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/script/highlight/styles/monokai.min.css">
+    <script src="../assets/script/highlight/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+
+<body>
+
+    <header>
+        <h2><a href="../index.html">zenBlog</a></h2>
+    </header>
+
+
+    <main>
+        <article>
+            <h1 id="posttitle">Mealy machine, Java records, and some spicy scalability</h1>
+            <p>It has been a while.</p>
+            <p>A lot of things have happened.</p>
+            <p>What I am interested in right now is to talk about my bachelor's
+                thesis.</p>
+            <h1 id="bachelors-thesis">Bachelor's thesis:</h1>
+            <p>Bachelor's thesis or that final project you do in your final year idk
+                different places have different names for these things I guess.</p>
+            <p>It was basically an application to provide a graphical interface for
+                test oracle extraction, where the oracles are represented by mealy
+                machines.</p>
+            <p>I will back up and explain.</p>
+            <p>A mealy machine is a finite transducer, a specific kind of
+                finite-state-machine, that, in addition to transitioning on input
+                letters, <em>also emits output letters</em>.</p>
+            <strong>
+                <p>Big distinction: finite transducers don't have a final/accepting</p>
+            </strong>
+            <p>Here, let me quote <a href="https://en.wikipedia.org/wiki/Mealy_machine">Wikipedia</a>:</p>
+            <blockquote>
+                <p>In the theory of computation, a Mealy machine is a finite-state
+                    machine whose output values are determined both by its current state and
+                    the current inputs. This is in contrast to a Moore machine, whose
+                    (Moore) output values are determined solely by its current state. A
+                    Mealy machine is a deterministic finite-state transducer: for each state
+                    and input, at most one transition is possible.</p>
+            </blockquote>
+            <p>Now, reading that definition I am a bit surprised at the <code>A
+            Mealy machine is a deterministic finite-state transducer</code>, because
+                I thought that had nothing to do with it, and I am still kind of
+                suspicious that that's part of the formal definition, however I don't
+                think it matters that much.</p>
+            <p>I can go for paragraphs explaining just what it is; but I'll keep it
+                short, TL;DR 1. Mealy machines are finite state machines. 2. Every time
+                a transition happens, the machine also emits output - you can imagine
+                this as the transition label having the corresponding triggering letter
+                accompanied by the output letter - as in, the label between two states
+                is 'a/0' instead of 'a'; and the 'a/0' means 'on the letter a, change
+                state and emit 0'</p>
+            <p>In addition to this, the formulation I am interested in is one of a
+                <em>non-deterministic Mealy machine</em>, meaning that a state can have
+                arbitrarily many applicable transitions, relative to an input token.
+            </p>
+            <p>Here is an example of a deterministic finite state machine:</p>
+            <p><img src="../assets/images/mealythings/AutomateMealy.png" alt="DeterministicMealy" /></p>
+            <p>So as you can see each transition is labelled with two main letters
+                separated by a vertical bar in this case. From the initial state
+                <code>i</code> if you get <code>0</code> the machine changes its current
+                state to <code>p</code> and outputs a <code>0</code> (Blue one on the
+                label). And so on. In this case the specification being modelled here is
+                the XOR-function. Two zeros/ones give you a zero, otherwise you get a
+                one. A bit of a caveat is that this modelling is more attuned to
+                electronic systems in the context of edge detection than programming
+                context, especially given the fact that on only one input, you don't
+                expect the XOR-function to short-circuit and give you input earlier than
+                the moment knowledge about the second argument is there, but it gets the
+                point across just as well, I hope.
+            </p>
+            <p>An example of a <em>non</em>-deterministic mealy machine would
+                be:</p>
+            <p><img src="../assets/images/mealythings/nonDeterministicMealy.png"
+                    alt="NonDeterministicMealy" /></p>
+            <p>… There really isn't anything new here, literally the only different
+                thing is the addition of outputs on transitions<a href="#fn1" class="footnote-ref" id="fnref1"
+                    role="doc-noteref"><sup>1</sup></a></p>
+            <p>What is the impetus for caring specifically about the non-determinism
+                aspect? Well …</p>
+            <h1 id="impetus">Impetus:</h1>
+            <h2 id="test-oracles">Test oracles:</h2>
+            <p>If I were to explain it in my own fancy terms, I would say that a
+                test oracle is a computational entity that captures the behavior of a
+                given system; its main purpose is to give a well-defined, unambiguous
+                description of the evolution and responses of a system.</p>
+            <p>It corresponds to a finite state machine.</p>
+            <p>They are, in essence, codified specifications that assist in the
+                evaluation of the behavior of Systems under Test.</p>
+            <p>Since the model of the test oracles and much of the process of
+                designing them can have choke-points where ambiguity arises because of
+                some inherent mis-understanding, mis-interpretation or things like that,
+                there can be multiple ways to define the responses and reactions of a
+                system.</p>
+            <p>These variants can be summarized simply with a
+                <em>non-deterministic</em> mealy machine.
+            </p>
+            <p>Therein lies the insight that is needed to understand why I (we) are
+                interested in them.</p>
+            <h2 id="in-particular">In particular:</h2>
+            <p>In particular, what you do when you have this non-deterministic
+                finite state machine, since it is representing ambiguity in your system,
+                is <strong>you try to get rid of it</strong>, obviously. You do this so
+                that you can extract a deterministic finite state machine that well
+                models the desired behavior.</p>
+            <p>So, <em>my</em> contribution, is sadly <em>not</em> to implement the
+                algorithms by which you can do this, but rather merely to provide a
+                graphical interface to allow for the manipulations necessary for this
+                stuff.</p>
+            <p>This interesting, phenomenal, intriguing set of algorithms, and I
+                don't get to have fun with it?</p>
+            <p>Very sad …</p>
+            <h2 id="the-specs">The specs:</h2>
+            <p>I would love to make a description of what the software should look
+                like etc., but I can't do that without also talking about the main
+                thing, since the View should at least be aware of the model …</p>
+            <p>So, basically: non-deterministic finite state machines, we care about
+                reducing ambiguity, so we focus on where it arises, which immediately
+                leads back to the <code>States</code> of the automaton, since ambiguity
+                means that for some <code>States</code>, an input may lead to different
+                places <em>with different output</em>, which can help us
+                <strong>differentiate</strong> between alternatives, and thus eliminate
+                bad ones.
+            </p>
+            <p>Thus, the strategy is to make <em>inquiries</em> to the (initially
+                non-deterministic) oracle by targeting <em>suspicious</em>
+                <code>States</code> and including the letter whose output is uncertain
+                (under those <code>States</code>) in the inquiries, so we can determine
+                the wrong transitions and eliminate them.
+            </p>
+            <p>This process is iterative, with room for improvement, <em>I
+                    think</em>.</p>
+            <h2 id="example">Example:</h2>
+            <p>A very simple example: consider a 2-state mealy machine like so:</p>
+            <p><img src="../assets/images/mealythings/mealyExample.png" alt="Example" /></p>
+            <p>There are two states.</p>
+            <p>Three ways to go from the initial state <code>q1</code> to
+                <code>q2</code>, with transitions <code>t0</code>, <code>t1</code> and
+                <code>t2</code>,
+            </p>
+            <p>Two ways to go from <code>q2</code> to <code>q1</code>,
+                <code>t4</code> and <code>t5</code>.
+            </p>
+            <p>The initial state is q1, on input 'a' there two possibilities, and
+                for the second state there is ambiguity in regard to input 'f', two
+                possibilities as well.</p>
+            <p>This isn't a practical example really, I'm doing it for the
+                illustration only, but I guess you can say it is practical in that it
+                helps get across the message.</p>
+            <p>SO, ANYWAYS, it is non-deterministic, right?, and I've named the
+                transitions too, there is ambiguity in <code>t0</code>, <code>t2</code>,
+                <code>t3</code> and <code>t4</code>, let's find this machine's
+                deterministic form.
+            </p>
+            <p>By the way this will be easy <code>af</code> (sorry, couldn't not do
+                it)</p>
+            <p>Anyway, say we feed this machine the string <code>"af"</code>, and
+                say we get as output (on the output tape or something) the string
+                <code>"33"</code>, what (if any) information does this tell us?
+            </p>
+            <p>It tells us much, since we know which of the first two choices
+                (t0/t2) was taken; <code>t2</code>, since the corresponding output was
+                <code>3</code>, not <code>9</code>. Likewise for the second ambiguity
+                (t3/t4); we know, again with the help of the output, that the transition
+                that was taken was the <code>t3</code>, not the <code>t4</code>.
+            </p>
+            <p>Resulting in this deterministic machine. <img
+                    src="../assets/images/mealythings/refinedMachine.png" alt="Refinement Example" /></p>
+            <p>So, for an introductory start I think this isn't too bad, although
+                perhaps I should have shown the iterative steps I've spoken about.<a href="#fn2" class="footnote-ref"
+                    id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+            <p>With that being said; I believe I can tell you the crux of what I've
+                understood of the goals: - Graphical interface that shows the machine, -
+                Should allow the interaction and the iterative process spoken about, -
+                full transparency nice to have; → execution log that tracks each
+                interaction between user and UI, controller and model, etc., -
+                Functionality to 'save' machines in some textual format necessary,
+                likewise for being able to load them into the software,</p>
+            <p>Also, one of the requirements was also apparently Java … which I
+                wasn't too thrilled about, but we'll talk about that soon enough, given
+                that it seems the interest was mainly for the JVM.</p>
+            <h1 id="used-toolstech">Used Tools/tech:</h1>
+            <p>In any case, I will spare you the comparative analysis of the tools
+                I've considered and whatnot, but the technologies/tools used were: *
+                JavaFX, Java GUI library, for creating and controlling UI. * Graphviz
+                was the tool I ended up using for displaying machines, this was not a
+                straightforward solution to come up with, but it was the one I ended up
+                with anyway. * ANTLR, for parsing and generating machines from text
+                files. * IntelliJ for code editing and Git, for Version Control.</p>
+            <h2 id="javafx">JavaFX:</h2>
+            <p>Really neat thing, was apparently part of the standard Java SDK, but
+                was removed, and now it requires outside installation. It is a really
+                neat thing to be honest, and Scene Builder (WindowBuilder but for
+                JavaFX) is awesome and much more powerful than Swing's tooling,
+                Scenebuilder gives you a WYSIWYG editor to build your UIs, that
+                generates a <em>fxml</em> file, which is a declarative view of the UI,
+                very nice and very … <em>functional</em> … <a href="#fn3" class="footnote-ref" id="fnref3"
+                    role="doc-noteref"><sup>3</sup></a></p>
+            <p>In any case, I ended up creating two UI, one being the major
+                important one, the other one being just a kind of testing ground that
+                turned out better than expected.</p>
+            <p>The first one was the one that is allegedly going to allow for all
+                those fancy Oracle Mining operations:</p>
+            <p><img src="../assets/images/mealythings/mainUI.png" alt="Main UI" /></p>
+            <p>Not too important: - The two views are to view the machine, they are
+                <a href="http://tutorials.jenkov.com/javafx/webview.html">WebView</a>s,
+                which are quite fancy and very interesting if I say so myself, I'll
+                leave it up to you to click the link and see why that might be the case.
+                The upper view is for the original oracle, the second one is for the
+                partial oracle, iE serves to show the iterative intermediate steps of
+                the transformation of the aforementioned oracle, in other words, the
+                upper view is a rather static view of the original Oracle, and the lower
+                one is for the up-to-date Oracle. - The side views are a bunch of <a
+                    href="http://tutorials.jenkov.com/javafx/listview.html">ListView</a>s to
+                show the current 'plausible output sequences' that are possible to be
+                generated and there is a button down there that allows the user to
+                select the correct expected output.
+            </p>
+            <h3 id="plausible-output-sequences-what-are-those">Plausible output
+                sequences? What are those?</h3>
+            <p>Well, to explain these, I will refer back to the initial mealy
+                machine I used as an example.</p>
+            <p>In that case for instance, you would enter your input string, as
+                <code>af</code> then the machine will be evaluated and return to you all
+                the possible outputs that will come from it, <em>that</em> is an example
+                of the 'plausible output sequences'
+            </p>
+            <p>As you can see, they are the main deciding element in our 'game
+                loop'', so to speak, because the feedback from the selction of one
+                output sequence over another one is what disqualifies many invalid
+                transitions. <a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+            <hr />
+            <p>The second was one I had created because I lacked knowledge on a
+                critical aspect of software development, and one that I should fix ASAP:
+                Testing and stuff like unit testing and such, which is embarassing, and
+                I am going to fix this defect as soon as I can.</p>
+            <p><img src="../assets/images/mealythings/debugUI.png" alt="Debug UI" /></p>
+            <p>This one is self-explanatory; I feel like explaining it would be
+                redundant as I expect anyone with any familiarity with automata to just
+                intuit the use case for this interface.</p>
+            <h2 id="antlr">ANTLR:</h2>
+            <p>ANother Tool For Language Recognition, it is used for parsing text
+                files that contain textual representations of machines, I have never had
+                the chance to work with this, so I learned it on the spot, it is pretty
+                neat, and I may dive deeper into it someday.</p>
+            <p>There are two ways to construct data from tree walking, creating
+                visitors or creating listeners, I went with listeners since they seemed
+                easier to implement, and I was, at that moment already grasping for as
+                much time as I could so when I implemented the listener class, and it
+                worked, I was already happy.</p>
+            <p>Won't detail how this was done as this is kinda secondary to me right
+                now. <a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+            <hr />
+            <h1 id="machine-design">Machine design:</h1>
+            <p>The main model I ended up with is:</p>
+            <div class="sourceCode" id="cb1">
+                <pre
+                    class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">zen@LAPTOP-UB70DERF:/mnt/c/Users/zenAndroid/IdeaProjects/oracleExtractor/src/main/java$</span> ls <span class="at">-R</span></span>
+            <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.:</span></span>
+            <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">app</span>  module-info.java  sample.puml</span>
+            <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./app:</span></span>
+            <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">oracleextractor</span></span>
+            <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./app/oracleextractor:</span></span>
+            <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ex">DebugController.java</span>  DebugUI.java  MainController.java  Main.java  model  reader</span>
+            <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">./app/oracleextractor/model:</span></span>
+            <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ex">exceptions</span>  Machine.java  State.java  Transition.java  utils</span>
+            <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ex">./app/oracleextractor/model/exceptions:</span></span>
+            <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="ex">BadInputException.java</span>  NoLastChange.java  NoPendingInput.java  NoTransitionFound.java  StateNotFound.java  TransitionNotApplicable.java  TransitionNotFound.java</span>
+            <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ex">./app/oracleextractor/model/utils:</span></span>
+            <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ex">AutomatonListener.java</span>  ToggleableBoolean.java  Trace.java  Utilities.java</span>
+            <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ex">./app/oracleextractor/reader:</span></span>
+            <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ex">automatonBaseListener.java</span>  automaton.g4      automatonLexer.interp  automatonLexer.tokens   automatonParser.java  automatonVisitor.java</span>
+            <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ex">automatonBaseVisitor.java</span>   automaton.interp  automatonLexer.java    automatonListener.java  automaton.tokens</span></code></pre>
+            </div>
+            <p><code>app/oracleextractor</code>: All necessary classes: - DebugUI
+                DebugController Main MainController := Classes for the UIs. - model:
+                Classes necessary for modeling the mealy machine - reader: classes that
+                handle the parsing</p>
+            <p><code>app/oracleextractor/model</code>: All modelling classes: -
+                exceptions: Custom exceptions for the handling of weird and incorrect
+                behavior in the machine. [^fpErrorHandling] - Machine.java, State.java,
+                Transition.java : Central pieces of the puzzle, will talk in better
+                detail. - utils/AutomatonListener.java : class that inherits from the
+                listener in <code>reader</code> package that was auto generated from
+                ANTLR. Implements a custom Listener that builds the Machine as it
+                listens to the TreeWalker's events. - utils/ToggleableBoolean.java :
+                Proxy, ad-hoc class that is basically a shotty work-around for a certain
+                restriction. [^shameful] - utils/Trace.java : Holds a trace of the
+                machine's execution; iE which transitions the machine took. -
+                utils/Utilities.java : Utilitiy functions that I could have technically
+                included elsewhere, but I just didn't have it in me because I thought
+                that they didn't fit the model, I'm talking stuff that wouldn't even
+                have made much sense: - <code>getPopup</code>,
+                <code>getTransitionChooserPopup</code>, <code>getStateByName</code>,
+                <code>evalMachine</code>, <code>findTransition</code>, etc … - reader :
+                Stuff that was auto generated by ANTLR, except for the g4 grammar file
+                that I wrote, the baseListener, the Lexer, the Parser, and the Listener
+                were what I used, although of course they themsleves used the other
+                weirdo files (tokens and such), did not use the visitor as I said.
+            </p>
+            <p><code>app/oracleextractor/exceptions, utils</code>: Execptions and
+                utilities: - The exception aren't too important: Can just guess or
+                browse the code in the repo, they aren't hard to detect, and their
+                purpose is rather obvious.</p>
+            <h2 id="machine">Machine:</h2>
+            <h3 id="fields">Fields:</h3>
+            <div class="sourceCode" id="cb2">
+                <pre
+                    class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">ArrayList</span><span class="op">&lt;</span><span class="bu">State</span><span class="op">&gt;</span> states<span class="op">;</span></span>
+            <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">State</span> initialState<span class="op">;</span></span>
+            <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">State</span> currentState<span class="op">;</span></span>
+            <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">ArrayList</span><span class="op">&lt;</span><span class="bu">Character</span><span class="op">&gt;</span> inputSequence<span class="op">;</span></span>
+            <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">ArrayList</span><span class="op">&lt;</span><span class="bu">Character</span><span class="op">&gt;</span> producedOutput<span class="op">;</span></span>
+            <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">Set</span><span class="op">&lt;</span><span class="bu">Character</span><span class="op">&gt;</span> inputAlphabet<span class="op">;</span></span>
+            <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">Set</span><span class="op">&lt;</span><span class="bu">Character</span><span class="op">&gt;</span> outputAlphabet<span class="op">;</span></span>
+            <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">Boolean</span> pendingInput<span class="op">;</span></span>
+            <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="bu">ArrayList</span><span class="op">&lt;</span>Transition<span class="op">&gt;</span> machineTransitions<span class="op">;</span></span>
+            <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> Trace machineTrace<span class="op">;</span></span></code></pre>
+            </div>
+            <p>The fields are self-explanatory. The methods are more interesting.
+                ### Methods: Not going to bother mentioning getters and setters (Java is
+                bloated! Did you know Java is bloated?)</p>
+            <div class="sourceCode" id="cb3">
+                <pre
+                    class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">nonDeterministicConsume</span><span class="op">()</span></span>
+            <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Performs all the operations necessary to consume the input.</span></span>
+            <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">getNextInputToken</span><span class="op">()</span></span>
+            <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Essentially gets the next letter from the inputSequence,</span></span>
+            <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">// but also changes the pendingInput flag if there remains no input letter.</span></span>
+            <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">takeTransition</span><span class="op">(</span>Transition transition<span class="op">)</span></span>
+            <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Take transition, change state accordingly and emit output.</span></span>
+            <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">processOutput</span><span class="op">(</span><span class="bu">Character</span> sourceTransition<span class="op">)</span></span>
+            <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">// ... This method does something incredible;it proces output :D</span></span>
+            <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="bu">String</span> <span class="fu">toDot</span><span class="op">()</span></span>
+            <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Return a dot representation of this Machine in a string, to be sent to the dot executable </span></span>
+            <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">// and turned into an SVG file that is show-able on the WebViews.</span></span>
+            <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> Machine <span class="fu">makeMachineCopy</span><span class="op">()</span></span>
+            <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">// This is how the &#39;reset&#39; button works (the &#39;reset&#39; in the DebugUI)</span></span>
+            <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> Machine <span class="fu">makeCurrentMachineCopy</span><span class="op">()</span></span>
+            <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">// This is like the older one except it also copies the global state of the Machine</span></span>
+            <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">// (its current input, its trace history and so on), I will explain the need for this later.</span></span></code></pre>
+            </div>
+            <h2 id="state">State</h2>
+            <p>Well, the <code>State</code> and <code>Transition</code> classes are
+                both special here, because I didn't implement them using regular old
+                classes, I used <a href="https://docs.oracle.com/en/java/javase/14/language/records.html">Java
+                    Records</a> for the job.</p>
+            <p>TL;DR: java records are immutable classes that generate getters and
+                setters and other utility methods automatically, they are less verbose
+                and god knows how much cooler that is.</p>
+            <p>Excrept from the link above.</p>
+            <p>A record consists of a name (in this example, it's Rectangle) and a
+                list of the record's components (which in this example are float length
+                and float width).</p>
+            <p>A record acquires these members automatically:</p>
+            <ul>
+                <li>A private final field for each of its components</li>
+                <li>A public read accessor method for each component with the same name
+                    and type of the component; in this example, these methods are
+                    Rectangle::length() and Rectangle::width()</li>
+                <li>A public constructor whose signature is derived from the record
+                    components list. The constructor initializes each private field from the
+                    corresponding argument.</li>
+                <li>Implementations of the equals() and hashCode() methods, which
+                    specify that two records are equal if they are of the same type and
+                    their corresponding record components are equal</li>
+                <li>An implementation of the toString() method that includes the string
+                    representation of all the record's components, with their names</li>
+            </ul>
+            <blockquote>
+                <p>It's hilarious to me how Java slowly implements Functional-like
+                    features … slowly converging towards <del>Common Li</del>…</p>
+            </blockquote>
+            <h3 id="fields-1">Fields</h3>
+            <p>Ah, screw it I will just straight up put the entire file here.</p>
+            <div class="sourceCode" id="cb4">
+                <pre
+                    class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> record <span class="bu">State</span><span class="op">(</span><span class="bu">String</span> stateName<span class="op">,</span> <span class="bu">ArrayList</span><span class="op">&lt;</span>Transition<span class="op">&gt;</span> outGoing<span class="op">,</span> <span class="bu">ArrayList</span><span class="op">&lt;</span>Transition<span class="op">&gt;</span> inComing<span class="op">)</span> <span class="op">{</span></span>
+            <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">static</span> <span class="dt">int</span> id <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+            <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="bu">State</span> <span class="fu">getState</span><span class="op">()</span> <span class="op">{</span></span>
+            <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// These constructors are a work-around around the fact that:</span></span>
+            <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">// 1- Cant declare default values for parameters</span></span>
+            <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// 2- One of these constructors initializes the name using the id</span></span>
+            <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="co">//    the other one just gets the name as an arg.</span></span>
+            <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+            <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="bu">State</span> <span class="fu">getState</span><span class="op">(</span><span class="bu">String</span> stateName<span class="op">)</span> <span class="op">{</span></span>
+            <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">// These constructors are a work-around around the fact that:</span></span>
+            <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="co">// 1- Cant declare default values for parameters</span></span>
+            <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="co">// 2- One of these constructors initializes the name using the id</span></span>
+            <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="co">//    the other one just gets the name as an arg.</span></span>
+            <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+            <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+            <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">addIncomingTransition</span><span class="op">(</span>Transition t<span class="op">)</span> <span class="op">{</span>inComing<span class="op">.</span><span class="fu">add</span><span class="op">(</span>t<span class="op">);}</span></span>
+            <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">addOutgoingTransition</span><span class="op">(</span>Transition t<span class="op">)</span> <span class="op">{</span>outGoing<span class="op">.</span><span class="fu">add</span><span class="op">(</span>t<span class="op">);}</span></span>
+            <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre>
+            </div>
+            <p>(ctor code omitted)</p>
+            <p>That's it, feels refreshing to be honest, of course … java (being
+                java and all) nothing is <em>really</em> immutable, it's just that the
+                reference that is immutable, not what the reference <em>points
+                    to</em>…</p>
+            <p>I found that counter-intuitive and kinda lame. But well, since it's
+                like this, I'll see if I can exploit it.</p>
+            <p>And that is exactly what I did with <code>Transition</code>, I
+                basically just profited of the auto generated code, otherwise created a
+                whole new other class just to hold my boolean variable, so I can work
+                around the immutability by having my mutable state in an external
+                wrapper.</p>
+            <p>I know I know, but it is much better than classes. ## Transition</p>
+            <div class="sourceCode" id="cb5">
+                <pre
+                    class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> record <span class="fu">Transition</span><span class="op">(</span><span class="bu">Character</span> transitionTrigger<span class="op">,</span> <span class="bu">Character</span> transitionOutput<span class="op">,</span></span>
+            <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                         <span class="bu">State</span> sourceState<span class="op">,</span> <span class="bu">State</span> destinationState<span class="op">,</span></span>
+            <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                         ToggleableBoolean wasVisited<span class="op">,</span> ToggleableBoolean transitionValid<span class="op">)</span> <span class="op">{</span></span>
+            <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ToggleableBoolean is a wrapper to the boolean value I actually care about.</span></span>
+            <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre>
+            </div>
+            <h3 id="methods">Methods:</h3>
+            <p>Not many interesting methods here, <code>wasTaken</code>,
+                <code>setTaken</code>, <code>isTriggeredBy</code> are the important
+                ones, and they aren't sophisticated at all, the names speak for
+                themselves really
+            </p>
+            <h1 id="a-nice-algorithm">A nice algorithm:</h1>
+            <p>So, without further ado, I will skip over the mundane algorithms, and
+                talk about the central one.</p>
+            <p>Let's see …</p>
+            <p>Given that this application wasn't even supposed to dive deep into
+                the guts of algorithms, I would say that this is still beyond the
+                requirements of the thesis, but I did it anyway to see if my model makes
+                sense/and how tortuous it would be to develop a sizable algorithm with
+                it.</p>
+            <p>Turns out it's not extremely hard, so that's good. Although not
+                perfect.</p>
+            <h2 id="evalmachine">evalMachine:</h2>
+            <p>This algorithm, as the name says, <em>evaluates<a href="#fn6" class="footnote-ref" id="fnref6"
+                        role="doc-noteref"><sup>6</sup></a> a
+                    Machine</em> on a given input, basically, for a given input, it figures
+                out all the possibles ways that input can be consumed by the
+                <em>non-deterministic machine</em> and outputs a series of
+                <code>Trace</code>s holding the necesary info.
+            </p>
+            <p>Here is how it works:</p>
+            <p><img src="../assets/images/mealythings/evalMachAlg.png" alt="evalMachAlg" /></p>
+            <p>The entirety of the code can be seen <a
+                    href="https://github.com/zenAndroid/oracle-extract/tree/record-branch">here</a>.</p>
+            <p>In this blog post so far I haven't really discussed the code in
+                detail because I believe that while it works, I don't like it very much
+                from an efficiency/elegance point of view.</p>
+            <p>A lot of the code I feel like can be baroque in a very hard to
+                capture way.</p>
+            <p>Of course, I'd like to just go ahead and say 'woe is me, OOP doesn't
+                help me model this correctly', but I think that while some aspects of
+                OOP are very weird to me (Having to declare a class to define top-level
+                functions, or alternatively declaring those methods in some classes
+                which always ends up being a weird decision because what if my algorithm
+                describes an operation that matters to two types of class and not just
+                one?[of course you end up making an arbitrary choice then, which kinda
+                destroys your conceptual 'every class has its own operations', <em>cargo
+                    cult programming smh</em>] etc. etc.).</p>
+            <p>I still believe some of it just tends to the fact that OOP hides
+                state from me and I don't like it very much, and also with Java I feel
+                like there is just some whole new level of … shitfuckery and exceptions
+                to some rules (like the mutable fields in record classes), anyway, my
+                movement to record classes made me think about some stuff … some stuff
+                that leads directly into Functional Programming land because this turns
+                out to be a great opportunity for me to try out rewriting an OOP
+                decent-sized project into an FP-based one, and seeing how I can scale
+                this up even more.</p>
+            <p>More importantly, when I finish this, I can have a clear idea in my
+                head of what working in both worlds is like.</p>
+            <h1 id="the-rewrite">The rewrite:</h1>
+            <p>So, the <code>r e w r i t e</code>, … I am actually considering many
+                languages for it actually, long term that is, but for now, the language
+                I picked is <a href="https://scala-lang.org/"><em>Scala</em></a>, I
+                picked it for many reasons, one of which is the fact that it targets the
+                JVM, and the other one is the fact that between the alternatives I
+                considered (mainly Scala and Groovy), it seemed like the one that
+                focused on functional programming.</p>
+            <p>The other reason of course, is that I already mentioned I was
+                interested in Scala, so there you go.</p>
+            <p><img src="../assets/images/mealythings/scala-spiral.png" alt="Cute Scala logo" /></p>
+            <p>I think I might add some other post to outline the feature set that
+                attracted me to this <a href="https://docs.scala-lang.org/scala3/book/scala-features.html">, or
+                    you can see for yourself</a>, but TL;DR: Martin Odersky (creator of
+                Scala) said that ''Scala was designed to show that a fusion of
+                functional and object-oriented programming is possible and practical.'',
+                obviously I am not about to take an advertisement as serious info about
+                something (who would?), but it was still intriguing, and, having fooled
+                around with it just a bit, quite true I think.</p>
+            <p>Not sure exactly how the models are going to change, <em>if</em> the
+                models are going to change, but I am looking forward to seeing how it
+                goes.</p>
+            <p>I will share my progress once I reach some sort of milestone and
+                describe the changes I've made, but so far there are plenty of things
+                that I am excited to implement and learn about: - Functional Design;
+                especially thinking about how the overarching machine parts and logic
+                will play out. - Static typing; This was surprising to me, because I did
+                not expect Scala's type system to be so advanced, you would think
+                initially that it's only got the basic aspects of product types, sum
+                types, type annotations, and enums or something like this: but actually,
+                it's quite stellar in this regard, so it should be interesting to see
+                the effect of introducing typed logic into the application (and maybe
+                later I'll develop this in scheme or racket or something, to see the
+                difference) - Functional error handing: while I can go on my merry ways
+                and trow around exceptions all I want, the functional way (for the most
+                part …) is to use <code>Option</code> type class, the
+                <code>Try/Success/Failure</code> or the <code>Either/Left/Right</code> -
+                ANTLR?? nah man I'm cool, I'll use <code>P A R S E R _ C O M B I N A T O
+            R S</code>: Really interested in using these and getting familiar with
+                them, they seem like a neat little thing that scales nicely. <br />
+                <br />
+            </p>
+            <h1 id="footnotes">Footnotes:</h1>
+            <section class="footnotes footnotes-end-of-document" role="doc-endnotes">
+                <hr />
+                <ol>
+                    <li id="fn1" role="doc-endnote">
+                        <p>Which still imposes some interesting
+                            design choices that would otherwise not crop up, I think.<a href="#fnref1"
+                                class="footnote-back" role="doc-backlink">↩︎</a></p>
+                    </li>
+                    <li id="fn2" role="doc-endnote">
+                        <p>As in, here is the machine now that
+                            we've gotten rid of the first ambiguity (shows image with the transition
+                            in red), and now we see that so-and-so and hare is the second iteration
+                            of removing the ambiguity (shows the machine), and now we see that there
+                            is no ambiguity, and so we conclude with this machine.<a href="#fnref2"
+                                class="footnote-back" role="doc-backlink">↩︎</a></p>
+                    </li>
+                    <li id="fn3" role="doc-endnote">
+                        <p>I cannot for the life of me stop
+                            fantasizing about using some tooling that will allow me to write an
+                            s-expression that holds the entirety of my UI spec, instead of
+                            <strong>disgusting XML</strong> things … some day … some day<a href="#fnref3"
+                                class="footnote-back" role="doc-backlink">↩︎</a>
+                        </p>
+                    </li>
+                    <li id="fn4" role="doc-endnote">
+                        <p>Something tells me I am not
+                            explaining this well, possibly because I am confused a bit about it,
+                            which is possible to be honest given that I didn't develop the
+                            algorithms to deal with this (during the thesis), only the UI elements
+                            seen here.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p>
+                    </li>
+                    <li id="fn5" role="doc-endnote">
+                        <p>And if I do end up succeeding in
+                            implementing major parts of this in Scala, I might even forego ANTLR nd
+                            use some parser combinator library, feels like it will be less hassle
+                            that way, although learning ANTLR will always be a minor goal for me,
+                            more on Scala soon in the post.<a href="#fnref5" class="footnote-back"
+                                role="doc-backlink">↩︎</a></p>
+                    </li>
+                    <li id="fn6" role="doc-endnote">
+                        <p>Not the interpreter kind of
+                            <code>eval</code> I'm afraid :(<a href="#fnref6" class="footnote-back"
+                                role="doc-backlink">↩︎</a>
+                        </p>
+                    </li>
+                </ol>
+            </section>
+
+        </article>
+    </main>
+
+    <footer>
+        <p>© 2022 zenAndroid</p>
+    </footer>
+
+</body>
+
+</html>
