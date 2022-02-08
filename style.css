@@ -1,6 +1,6 @@
 :root{
   --page-bg-color:            hsl(270 , 15%, 5%);
-  --article-bg-color:         hsl(270, 15%, 6%);
+  --article-bg-color:         hsl(270, 15%, 9%);
   --nav-bg-color:             hsl(270, 15%, 8%);
   --hover-nav-color:          hsl(270, 70%, 12%);
   --header-footer-bg-color:   hsl(270, 15%, 4%);
@@ -10,10 +10,6 @@
   --article-links :           hsl(270, 76%, 42%);
 }
 
-
-* {
-  box-sizing: border-box;
-}
 
 html{
   background-color: var(--page-bg-color);
@@ -49,7 +45,7 @@ main {
 article {
   line-height: 1.8em;
   padding: 2em;
-  width: 80vw;
+  width: 90vw;
   background-color: var(--article-bg-color);
   color: lightgray;
 }
@@ -92,7 +88,7 @@ header a::after {
 }
 
 #posttitle {
-  font-size: 4em;
+  font-size: 2em;
   text-align: center;
 }
 @media (max-width: 600px) {
