@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zenBlog</title>
+    <link href="style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <header>
+        <h2><a href="index.html">zenBlog</a></h2>
+    </header>
+
+    <nav>
+        <a href="blog_index.html">Blog Index</a>
+        <a href="generic_gateway.html">General Content</a>
+        <a href="about.html">About</a>
+        <a href="featured.html">Featured links</a>
+    </nav>
+
+    <main>
+        <article>
+            $body$
+            $for(post)$<hr>
+            <div class="post-card">
+                <strong><a href="posts/$post.filename$.html">$post.name$</a></strong>
+                <time datetime="$post.date$">$post.date$</time>
+                <section>
+                    $post.description$
+                </section>
+                <aside>Tags: $post.tags$</aside>
+            </div>
+            $endfor$
+        </article>
+    </main>
+
+    <footer>
+        <p>© 2022 zenAndroid</p>
+    </footer>
+
+</body>
+
+</html>
