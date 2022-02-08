@@ -1,13 +1,13 @@
-:root{
+:root {
   --page-bg-color:            hsl(270 , 15%, 5%);
   --article-bg-color:         hsl(270, 15%, 9%);
   --nav-bg-color:             hsl(270, 15%, 8%);
   --hover-nav-color:          hsl(270, 70%, 12%);
   --header-footer-bg-color:   hsl(270, 15%, 4%);
   --header-footer-text-color: hsl(270, 15%, 50%);
-  --visited-link-color:       hsl(270, 60%, 22%);
+  --visited-link-color:       hsl(270, 60%, 44%);
   --nav-links:                hsl(270, 22%, 82%);
-  --article-links :           hsl(270, 76%, 42%);
+  --article-links :           hsl(270, 76%, 80%);
 }
 
 
@@ -79,18 +79,11 @@ footer {
   text-align: center;
 }
 
-footer p::after {
-  content: "";
-}
-
-header a::after {
-  /* Pain */
-}
-
 #posttitle {
   font-size: 2em;
   text-align: center;
 }
+
 @media (max-width: 600px) {
   nav {
     flex-direction: column;
