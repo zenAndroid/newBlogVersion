@@ -54,15 +54,15 @@
 </p>
 <pre>
     <code class="language-java">
-        public void setMachineTrace(Trace machineTrace) {
-                this.machineTrace = machineTrace;
-            }
+public void setMachineTrace(Trace machineTrace) {
+        this.machineTrace = machineTrace;
+    }
     </code>
 </pre>
 whereas in Scala, this becomes
 <pre>
     <code class="language-scala">
-        def setTrace(argTrace: List[Transition]): Unit = machineTrace = argTrace
+def setTrace(argTrace: List[Transition]): Unit = machineTrace = argTrace
     </code>
 </pre>
 <p>
@@ -74,7 +74,7 @@ whereas in Scala, this becomes
 </p>
 <pre>
     <code class="language-scala">
-        def setTrace(argTrace) = machineTrace = argTrace
+def setTrace(argTrace) = machineTrace = argTrace
     </code>
 </pre>
 <p>
@@ -122,13 +122,13 @@ For example, I called a method in Java to set the machines transition like so:
 
 <pre>
     <code class="language-java">
-        public void setMachineTransitions(ArrayList<Transition> transitions) {
-                for (Transition t : transitions) {
-                    machineTransitions.add(t);
-                    t.sourceState().addOutgoingTransition(t);
-                    t.destinationState().addIncomingTransition(t);
-                }
-            }
+public void setMachineTransitions(ArrayList<Transition> transitions) {
+        for (Transition t : transitions) {
+            machineTransitions.add(t);
+            t.sourceState().addOutgoingTransition(t);
+            t.destinationState().addIncomingTransition(t);
+        }
+    }
     </code>
 </pre>
 
@@ -136,9 +136,9 @@ But in Scala, this is simply one expression, no method needed:
 
 <pre>
     <code class="language-scala">
-        for transition <- machineTransitions do
-            transition.transitionSource.addOutgoingTransition(transition)
-            transition.tranditionDest.addIncominTransition(transition)
+for transition <- machineTransitions do
+    transition.transitionSource.addOutgoingTransition(transition)
+    transition.tranditionDest.addIncominTransition(transition)
     </code>
 </pre>
 </p>
@@ -157,50 +157,50 @@ But in Scala, this is simply one expression, no method needed:
 
 <pre>
     <code class="language-scala">
-        def toDot: String =
-          s"""digraph {
-            node [shape=point] INIT;
-            ${currentState.getName} [shape=\"doublecircle\"];
-            node [shape=circle];
-            rankdir = LR;
-            INIT -> ${initialState.getName};
-            ${
-            var accumulator = ""
-            for transition <- machineTransitions do
-              val sourceName = transition.transitionSource.getName
-              val destName   = transition.tranditionDest.getName
-              val trigger    = transition.transitionTrigger
-              val output     = transition.transitionOutput
-              accumulator += s"$sourceName -> $destName [label=\"$trigger/$output\"];\n"
-              accumulator += "      "
-            accumulator
-          }
-  }"""
+def toDot: String =
+  s"""digraph {
+    node [shape=point] INIT;
+    ${currentState.getName} [shape=\"doublecircle\"];
+    node [shape=circle];
+    rankdir = LR;
+    INIT -> ${initialState.getName};
+    ${
+    var accumulator = ""
+    for transition <- machineTransitions do
+      val sourceName = transition.transitionSource.getName
+      val destName   = transition.tranditionDest.getName
+      val trigger    = transition.transitionTrigger
+      val output     = transition.transitionOutput
+      accumulator += s"$sourceName -> $destName [label=\"$trigger/$output\"];\n"
+      accumulator += "      "
+    accumulator
+  }
+}"""
     </code>
 </pre>
 versus explicit appends using StringBuilders (ugh ...)
 <pre><code class="language-java">
-        public String toDot() { // TODO: honestly, this can go to utilities man
-            StringBuilder b = new StringBuilder("digraph Automaton {\n");
-            b.append("    node [shape=point] INIT;\n");
-            b.append("    ").append(currentState.stateName()).append(" ").append("[shape=\"doublecircle\"];\n");
-            b.append("    node [shape=circle];\n");
-            b.append("    rankdir = LR;\n");
-            b.append("    INIT -> ").append(getInitialState().stateName()).append(";\n");
-            ArrayList<State> machineStates = getStates();
-            for (State s : machineStates) {
-                var stateTranses = s.outGoing(); // The transitions that come from this state.
-                for (Transition t : stateTranses) {
-                    b.append("    ").append(s.stateName()).append(" -> ").append(t.destinationState().stateName()).append(" ");
-                    b.append("[label=\"").append(t.transitionTrigger())
-                            .append("/")
-                            .append(t.transitionOutput())
-                            .append(t.wasTaken() ? "\", color=red];" : "\"];")
-                            .append("\n");
-                }
-            }
-            return b.append("}\n").toString();
+public String toDot() { // TODO: honestly, this can go to utilities man
+    StringBuilder b = new StringBuilder("digraph Automaton {\n");
+    b.append("    node [shape=point] INIT;\n");
+    b.append("    ").append(currentState.stateName()).append(" ").append("[shape=\"doublecircle\"];\n");
+    b.append("    node [shape=circle];\n");
+    b.append("    rankdir = LR;\n");
+    b.append("    INIT -> ").append(getInitialState().stateName()).append(";\n");
+    ArrayList<State> machineStates = getStates();
+    for (State s : machineStates) {
+        var stateTranses = s.outGoing(); // The transitions that come from this state.
+        for (Transition t : stateTranses) {
+            b.append("    ").append(s.stateName()).append(" -> ").append(t.destinationState().stateName()).append(" ");
+            b.append("[label=\"").append(t.transitionTrigger())
+                    .append("/")
+                    .append(t.transitionOutput())
+                    .append(t.wasTaken() ? "\", color=red];" : "\"];")
+                    .append("\n");
         }
+    }
+    return b.append("}\n").toString();
+}
 </code></pre>
 
 <h3> Multiple declarations per file & Top-level declarations:</h3>
