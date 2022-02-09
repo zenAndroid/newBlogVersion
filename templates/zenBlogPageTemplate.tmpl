@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../style.css" rel="stylesheet">
+    $if(post)$
+        <title>zenBlog - $title$</title>
+    $else$
+        <title>zenBlog - zenAndroid's space!</title>
+    $endif$
+</head>
+
+<body>
+
+    <header>
+        <h2><a href="../index.html">zenBlog</a></h2>
+    </header>
+
+    $if(page)$
+        <nav>
+            <a href="blog_index.html">Blog Index</a>
+            <a href="generic_gateway.html">General Content</a>
+            <a href="about.html">About</a>
+            <a href="featured.html">Featured links</a>
+        </nav>
+    $endif$
+
+    <main>
+        <article>
+            $if(post)$
+            <h1 id="posttitle">$title$</h1>
+            $endif$
+            
+            $body$
+            
+            <a href="mailto:zenbot16@gmail.com?subject=RE:zenBlog - $title$">
+                <button>Comment via email</button>
+            </a>
+        </article>
+    </main>
+
+    <footer>
+        <p>© 2022 zenAndroid</p>
+    </footer>
+
+</body>
+
+</html>
